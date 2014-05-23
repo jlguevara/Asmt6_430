@@ -71,6 +71,19 @@ int main(int argc, char const* argv[])
   strcpy(e->type, "numC");
   e->numVal = 3;
 
-  printf("%lf\n", interp(e)->numVal);
+  numC *f = malloc(sizeof(numC));
+  f->type = malloc(sizeof(char) * 100);
+  strcpy(f->type, "numC");
+  f->numVal = 3;
+
+  binopC *b = malloc(sizeof(binopC));
+  b->type = malloc(sizeof(char) * 100);
+  strcpy(b->type, "binopC");
+  b->operator = malloc(sizeof(char) * 10);
+  strcpy(b->operator, "+");
+  b->bozor1 = e;
+  b->bozor2 = f;
+
+  printf("%lf\n", interp(b)->numVal);
   return 0;
 }
