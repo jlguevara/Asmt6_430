@@ -1,14 +1,14 @@
-typedef struct Binop {
+typedef struct binopC {
    char *type;
    char *operator;
    void *bozor1;
    void *bozor2;
-} Binop;
+} binopC;
 
-typedef struct NumC {
+typedef struct numC {
    char *type;
    double numVal;
-} NumC;
+} numC;
 
 typedef struct ifC {
    char *type;
@@ -30,4 +30,4 @@ typedef struct boolC {
 typedef struct numV {
   char *type;
   double numVal;
-}
+} numV;
