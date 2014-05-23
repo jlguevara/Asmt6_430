@@ -1,32 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "asmt6.h"
 
-
-int evalBinop(binopC* binop) {
+numV* evalBinop (binopC *binop) {
+   numV *val = malloc(sizeof(numV));
+   
    if (strcmp(binop->operator, "+") == 0) {
-      return binop->bozor1 + binop->bozor2;
+      val->numVal = *((double *) binop->bozor1) +  *((double *) binop->bozor2);
       //note, must eval these binops later
    }
    else if (strcmp(binop->operator, "-") == 0) {
-      return binop->bozor1 - binop->bozor2;
+      val->numVal = *((double *) binop->bozor1) -  *((double *) binop->bozor2);
    }
    else if (strcmp(binop->operator, "*") == 0) {
-      return binop->bozor1 * binop->bozor2;
+      val->numVal = *((double *) binop->bozor1) *  *((double *) binop->bozor2);
    }
    else if (strcmp(binop->operator, "/") == 0) {
-      return binop->bozor1 / binop->bozor2;
+      
+      val->numVal = *((double *) binop->bozor1) /  *((double *) binop->bozor2);
    }
    else if (strcmp(binop->operator, "<=") == 0) {
-      return binop->bozor1 <= binop->bozor2;
+      
+      val->numVal = *((double *) binop->bozor1) <=  *((double *) binop->bozor2);
    }
    else if (strcmp(binop->operator, "eq?") == 0) {
-      return binop->bozor1 == binop->bozor2;
+   
+      val->numVal = *((double *) binop->bozor1) ==  *((double *) binop->bozor2);
    }
 
+   return val;
 }
-
 
 numV *interp(void *e) {
   char *type = ((numC *) e)->type;
