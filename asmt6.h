@@ -27,5 +27,7 @@ typedef struct boolC {
    int val;
 } boolC;
 
-
-
+typedef struct numV {
+  char *type;
+  double numVal;
+}
