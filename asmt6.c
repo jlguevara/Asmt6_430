@@ -4,6 +4,12 @@
 #include <assert.h>
 #include "asmt6.h"
 
+#define makeString(P, S) \
+  (P) = malloc(sizeof(char) * 16); \
+  strcpy((P), (S));
+
+numV *interp(void *e);
+
 numV* evalBinop (binopC *binop) {
    numV *val = malloc(sizeof(numV));
    
@@ -33,6 +39,14 @@ numV* evalBinop (binopC *binop) {
    return val;
 }
 
+void* evalIfC(ifC* ifc) {
+   if (interp(ifc->test)->numVal == 1) {
+      return ifc->then;
+   }
+   else 
+      return ifc->els;
+}
+
 numV *interp(void *e) {
   char *type = ((numC *) e)->type;
 
@@ -42,8 +56,7 @@ numV *interp(void *e) {
   }
   else if (strcmp(type, "numC") == 0) {
     numV *result = malloc(sizeof(numV));
-    result->type = malloc(sizeof(char) * 100);
-    strcpy(result->type, "numV");
+    makeString(result->type, "numV");
 
     numC *expr = (numC *) e;
     result->numVal = expr->numVal;
@@ -55,8 +68,7 @@ numV *interp(void *e) {
   }
   else if (strcmp(type, "boolC") == 0) {
     numV *result = malloc(sizeof(numV));
-    result->type = malloc(sizeof(char) * 100);
-    strcpy(result->type, "numV");
+    makeString(result->type, "numV");
     result->numVal = ((boolC *) e)->val;
     return result;
   }
@@ -67,23 +79,25 @@ numV *interp(void *e) {
 int main(int argc, char const* argv[])
 {
   numC *e = malloc(sizeof(numC));
-  e->type = malloc(sizeof(char) * 100);
-  strcpy(e->type, "numC");
-  e->numVal = 3;
+  makeString(e->type, "numC");
+  e->numVal = 1;
 
   numC *f = malloc(sizeof(numC));
-  f->type = malloc(sizeof(char) * 100);
-  strcpy(f->type, "numC");
-  f->numVal = 3;
+  makeString(f->type, "numC");
+  f->numVal = 0;
 
-  binopC *b = malloc(sizeof(binopC));
-  b->type = malloc(sizeof(char) * 100);
-  strcpy(b->type, "binopC");
-  b->operator = malloc(sizeof(char) * 10);
-  strcpy(b->operator, "+");
-  b->bozor1 = e;
-  b->bozor2 = f;
+  numC *g = malloc(sizeof(numC));
+  makeString(g->type, "numC");
+  g->numVal = -1;
 
-  printf("%lf\n", interp(b)->numVal);
+  ifC *i = malloc(sizeof(ifC));
+  makeString(i->type, "ifC");
+  i->test = e;
+  i->then = f;
+  i->els = g;
+
+
+
+  printf("%lf\n", interp(i)->numVal);
   return 0;
 }
