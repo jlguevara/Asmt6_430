@@ -146,7 +146,7 @@ void *interpBinop(char *op, void *left, void *right) {
         printf("binop: I only take numbers right now\n");
         return NULL;
     }
-    
+
     NumV *lNum = left;
     NumV *rNum = right;
     NumV *result = malloc(sizeof(NumV));
@@ -165,6 +165,12 @@ void *interpBinop(char *op, void *left, void *right) {
         }
         result->n = lNum->n / rNum->n;
     }
+    else if (!strcmp(op, "eq?")) {
+        result->n = lNum->n == rNum->n;
+    }
+    else if (!strcmp(op, "<=")) {
+        result->n = lNum->n <= rNum->n;
+    }
     else {
         printf("unsuppored operation\n");
         return NULL;
@@ -175,7 +181,7 @@ void *interpBinop(char *op, void *left, void *right) {
 // interpret an "ExprC" and return a "Value"
 void *interp(void *e, LinkedList *env) {
     if (e == NULL) {
-        printf("interp: got nothing\n"); 
+        printf("interp: got nothing\n");
         return NULL;
     }
 
@@ -215,7 +221,7 @@ void *interp(void *e, LinkedList *env) {
             bc = (BinopC *) e;
             void *left = interp(bc->left, LinkedList_clone(env));
             void *right = interp(bc->right, LinkedList_clone(env));
-            return interpBinop(bc->op, left, right); 
+            return interpBinop(bc->op, left, right);
             break;
         case lamC:
             lambda = (LamC *) e;
@@ -233,16 +239,16 @@ void *interp(void *e, LinkedList *env) {
             if (closure == NULL || closure->type != closV) {
                 printf("interp: appC got a non-function.\n");
                 return NULL;
-            } 
+            }
 
             binding = malloc(sizeof(Binding));
             binding->name = malloc(sizeof(strlen(closure->param)));
-            strcpy(binding->name, closure->param); 
+            strcpy(binding->name, closure->param);
             binding->value = cloneValue(interp(app->arg, env));
 
 
             LinkedList_add(closure->env, binding);
-            return interp(closure->body, closure->env); 
+            return interp(closure->body, closure->env);
             break;
         default:
             printf("interp: unable to decipher your expression");
@@ -272,7 +278,7 @@ void testClosures() {
     NumV *result = interp(&app2, env);
 
     assert(result->type == numV);
-    assert(result->n == 10); 
+    assert(result->n == 10);
 }
 
 void testAppC() {
@@ -289,19 +295,19 @@ void testAppC() {
 
     NumV *result = interp(&app, env);
     assert(result->type == numV);
-    assert(result->n == 49); 
+    assert(result->n == 49);
 }
 
 void testLambda() {
     char *varName = "X";
     IdC id = {idC, varName};
-    
+
     char *op = "*";
     BinopC binop = {binopC, op, &id, &id};
 
     LamC lambda = {lamC, varName, &binop};
     ClosV *closure = interp(&lambda, NULL);
-    
+
     assert(closure->type == closV);
     assert(!strcmp(closure->param, varName));
     assert(closure->body == &binop);
@@ -346,6 +352,22 @@ void testInterpBinop() {
    op = '/';
    result = interpBinop(&op, x, y);
    assert(result->n == 2);
+
+   char *cop = "eq?";
+   result = interpBinop(cop, x, y);
+   assert(result->n == 0);
+
+   y->n = 4;
+   result = interpBinop(cop, x, y);
+   assert(result->n == 1);
+
+   char *cop1 = "<=";
+   result = interpBinop(cop1, x, y);
+   assert(result->n == 1);
+
+   y->n = 3;
+   result = interpBinop(cop1, x, y);
+   assert(result->n == 0);
 
    y->n = 0;
    result = interpBinop(&op, x, y);
