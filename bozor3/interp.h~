@@ -1,0 +1,92 @@
+typedef enum {
+    numC,
+    boolC,
+    idC,
+    ifC,
+    appC,
+    binopC,
+    lamC,
+    numV,
+    closV,
+    boolV
+} Type;
+
+typedef struct {
+    Type type;
+    double n;
+} numC;
+
+typedef struct {
+    Type type;
+    char *v;
+} boolC;
+
+typedef struct {
+    Type type;
+    char *name;
+} idC;
+
+typedef struct {
+    Type type;
+    void *test;
+    void *then;
+    void *othewise;
+} ifC;
+
+typedef struct {
+    Type type;
+    void *fun;
+    void *arg;
+} appC;
+
+typedef struct {
+    Type type;
+    char *op;
+    void *left;
+    void *right;
+} binopC;
+
+typedef struct {
+    Type type;
+    char *param;
+    void *body;
+} lamC;
+
+typedef struct {
+    Type type;
+    double n;
+} numV;
+
+typedef struct {
+    Type type;
+    char *param;
+    void *body;
+    // add environment
+} closV;
+
+typedef struct {
+    Type type;
+    char *v;
+} boolV;
+
+// interpret an "ExprC" and return a "Value"
+void *interp(void *e) {
+    if (e == NULL) {
+        printf("null expression\n");
+        return;
+    }
+
+    switch (e->type) {
+        case numC:
+            return 3;
+            break;
+        default:
+           printf("default case\n"); 
+    }
+}
+
+int main() {
+    numC *num = malloc(sizeof(numC));
+    num->n = 7;
+    printf(interp(num);
+}
