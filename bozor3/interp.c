@@ -152,6 +152,9 @@ void *interpBinop(char *op, void *left, void *right) {
     NumV *result = malloc(sizeof(NumV));
     result->type = numV;
 
+    BoolV *boolResult = malloc(sizeof(BoolV));
+    boolResult->type = boolV;
+
     if (*op == '+')
         result->n = lNum->n + rNum->n;
     else if (*op == '-')
@@ -166,10 +169,12 @@ void *interpBinop(char *op, void *left, void *right) {
         result->n = lNum->n / rNum->n;
     }
     else if (!strcmp(op, "eq?")) {
-        result->n = lNum->n == rNum->n;
+        boolResult->v = lNum->n == rNum->n ? "true" : "false";
+        return boolResult;
     }
     else if (!strcmp(op, "<=")) {
-        result->n = lNum->n <= rNum->n;
+        boolResult->v = lNum->n <= rNum->n ? "true" : "false";
+        return boolResult;
     }
     else {
         printf("unsuppored operation\n");
@@ -189,6 +194,7 @@ void *interp(void *e, LinkedList *env) {
     NumV *numResult;
     BoolV *boolResult;
     BinopC *bc;
+    IfC *ifc;
     ClosV *closure;
     LamC *lambda;
     AppC *app;
@@ -204,25 +210,27 @@ void *interp(void *e, LinkedList *env) {
                 return NULL;
             }
             return binding->value;
-            break;
         case numC:
             numResult = malloc(sizeof(NumV));
             numResult->type = numV;
             numResult->n = ((NumC *) e)->n;
             return numResult;
-            break;
         case boolC:
             boolResult = malloc(sizeof(BoolV));
             boolResult->type = boolV;
             boolResult->v = ((BoolC *)e)->v;
             return boolResult;
-            break;
         case binopC:
             bc = (BinopC *) e;
             void *left = interp(bc->left, LinkedList_clone(env));
             void *right = interp(bc->right, LinkedList_clone(env));
             return interpBinop(bc->op, left, right);
-            break;
+        case ifC:
+            ifc = (IfC *) e;
+            boolResult = interp(ifc->test, LinkedList_clone(env));
+            if (!strcmp(boolResult->v, "true"))
+                return interp(ifc->then, LinkedList_clone(env));
+            return interp(ifc->othewise, LinkedList_clone(env));
         case lamC:
             lambda = (LamC *) e;
             closure = malloc(sizeof(ClosV));
@@ -232,7 +240,6 @@ void *interp(void *e, LinkedList *env) {
             closure->body = lambda->body;
             closure->env = LinkedList_clone(env);
             return closure;
-            break;
         case appC:
             app = (AppC *) e;
             closure = interp(app->fun, env);
@@ -249,7 +256,6 @@ void *interp(void *e, LinkedList *env) {
 
             LinkedList_add(closure->env, binding);
             return interp(closure->body, closure->env);
-            break;
         default:
             printf("interp: unable to decipher your expression");
             return NULL;
@@ -326,9 +332,33 @@ void testInterp() {
     assert(!strcmp(((BoolV *)interp(boolean, NULL))->v, boolean->v));
 }
 
+void testIf() {
+    IfC *ifc = malloc(sizeof(IfC));
+    ifc->type = ifC;
+
+    char *op = "<=";
+    NumC a = {numC, 3};
+    NumC b = {numC, 5};
+    BinopC binop = {binopC, op, &a, &b};
+
+    NumC c = {numC, 1};
+    ifc->test = &binop;
+    ifc->then = &a;
+    ifc->othewise = &b;
+
+    NumV *result = interp(ifc, NULL);
+    assert(result->n == 3);
+
+    binop.right = &c;
+    ifc->test = &binop;
+    result = interp(ifc, NULL);
+    assert(result->n == 5);
+}
+
 void testInterpBinop() {
     char op = '+';
     NumV *result;
+    BoolV *boolResult;
 
     NumV *x = malloc(sizeof(NumV));
     x->type = numV;
@@ -338,46 +368,47 @@ void testInterpBinop() {
     y->type = numV;
     y->n = 2;
 
-   result = interpBinop(&op, x, y);
-   assert(result->n == 6);
+    result = interpBinop(&op, x, y);
+    assert(result->n == 6);
 
-   op = '-';
-   result = interpBinop(&op, x, y);
-   assert(result->n == 2);
+    op = '-';
+    result = interpBinop(&op, x, y);
+    assert(result->n == 2);
 
-   op = '*';
-   result = interpBinop(&op, x, y);
-   assert(result->n == 8);
+    op = '*';
+    result = interpBinop(&op, x, y);
+    assert(result->n == 8);
 
-   op = '/';
-   result = interpBinop(&op, x, y);
-   assert(result->n == 2);
+    op = '/';
+    result = interpBinop(&op, x, y);
+    assert(result->n == 2);
 
-   char *cop = "eq?";
-   result = interpBinop(cop, x, y);
-   assert(result->n == 0);
+    char *cop = "eq?";
+    boolResult = interpBinop(cop, x, y);
+    assert(!strcmp(boolResult->v, "false"));
 
-   y->n = 4;
-   result = interpBinop(cop, x, y);
-   assert(result->n == 1);
+    y->n = 4;
+    boolResult = interpBinop(cop, x, y);
+    assert(!strcmp(boolResult->v, "true"));
 
-   char *cop1 = "<=";
-   result = interpBinop(cop1, x, y);
-   assert(result->n == 1);
+    char *cop1 = "<=";
+    boolResult = interpBinop(cop1, x, y);
+    assert(!strcmp(boolResult->v, "true"));
 
-   y->n = 3;
-   result = interpBinop(cop1, x, y);
-   assert(result->n == 0);
+    y->n = 3;
+    boolResult = interpBinop(cop1, x, y);
+    assert(!strcmp(boolResult->v, "false"));
 
-   y->n = 0;
-   result = interpBinop(&op, x, y);
-   assert(result == NULL);
+    y->n = 0;
+    result = interpBinop(&op, x, y);
+    assert(result == NULL);
 }
 
 // master test function
 int main() {
     testInterp();
     testInterpBinop();
+    testIf();
     testLambda();
     testAppC();
     testClosures();
